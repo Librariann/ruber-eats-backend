@@ -6,6 +6,9 @@ import { RestaurantsModule } from './restaurants/restaurants.module';
 import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
 import { ConfigModule } from '@nestjs/config';
 import { Restaurant } from './restaurants/entities/restaurant.entity';
+import { UsersModule } from './users/users.module';
+import { CommonModule } from './common/common.module';
+import { User } from './users/entities/user.entity';
 console.log(Joi);
 @Module({
   imports: [
@@ -26,7 +29,6 @@ console.log(Joi);
       autoSchemaFile: true, //메모리에 생성한다
       driver: ApolloDriver,
     }),
-    RestaurantsModule,
     TypeOrmModule.forRoot({
       type: 'postgres',
       host: process.env.DB_HOST,
@@ -36,8 +38,10 @@ console.log(Joi);
       database: process.env.DB_NAME,
       synchronize: process.env.NODE_ENV !== 'prod',
       logging: process.env.NODE_ENV !== 'prod',
-      entities: [Restaurant],
+      entities: [User],
     }),
+    UsersModule,
+    CommonModule,
   ],
   controllers: [],
   providers: [],
