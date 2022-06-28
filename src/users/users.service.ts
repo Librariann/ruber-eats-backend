@@ -48,10 +48,16 @@ export class UsersService {
       if (!passwordCorrect) {
         return [passwordCorrect, '로그인 실패했습니다'];
       }
+      //sign에 user.id만 넘겨주는것은 이 프로젝트에서만 사용 할것이기때문에
+      //만약 다른 프로젝트에서 더 크게 사용한다면 object형태로 넘겨주면된다
       const token = this.jwtService.sign(user.id);
       return [passwordCorrect, '로그인 성공했습니다', token];
     } catch (error) {
       return [false, error];
     }
+  }
+
+  async findById(id: number): Promise<User> {
+    return this.users.findOneBy({ id });
   }
 }
