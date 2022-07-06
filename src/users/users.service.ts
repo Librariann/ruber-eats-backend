@@ -15,9 +15,12 @@ import { MailService } from 'src/mail/mail.service';
 
 export class UsersService {
   constructor(
-    @InjectRepository(User) private readonly users: Repository<User>,
+    @InjectRepository(User)
+    private readonly users: Repository<User>,
+
     @InjectRepository(Verification)
     private readonly verifications: Repository<Verification>,
+
     private readonly jwtService: JwtService,
     private readonly mailService: MailService,
   ) {}
@@ -28,7 +31,7 @@ export class UsersService {
     role,
   }: CreateAccountInput): Promise<CreateAccountOutput> {
     try {
-      const exists = await this.users.findOneBy({ email });
+      const exists = await this.users.findOne({ where: { email } });
       if (exists) {
         return { ok: false, error: '이미 존재하는 계정입니다' };
       }
