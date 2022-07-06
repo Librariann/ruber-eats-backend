@@ -1,0 +1,12 @@
+call next value for hibernate_sequence;
+insert into user_tb (id, email, name, created_at, updated_at) VALUES (1, '1@naver.com', 'Librarian1', now(), now());
+call next value for hibernate_sequence;
+insert into user_tb (id, email, name, created_at, updated_at) VALUES (2, '2@naver.com', 'Librarian2', now(), now());
+call next value for hibernate_sequence;
+insert into user_tb (id, email, name, created_at, updated_at) VALUES (3, '3@naver.com', 'Librarian3', now(), now());
+call next value for hibernate_sequence;
+insert into user_tb (id, email, name, created_at, updated_at) VALUES (4, '4@naver.com', 'Librarian4', now(), now());
+call next value for hibernate_sequence;
+insert into user_tb (id, email, name, created_at, updated_at) VALUES (5, '5@naver.com', 'Librarian5', now(), now());
+call next value for hibernate_sequence;
+insert into user_tb (id, email, name, created_at, updated_at) VALUES (6, '6@naver.com', 'Librarian1', now(), now());
