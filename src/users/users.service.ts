@@ -66,20 +66,24 @@ export class UsersService {
       //만약 정보가 변경됐다면 백엔드에서 발급한 토큰 값이랑 다르기때문에 토큰의 변경 진위여부를 파악할수있다
       const passwordCorrect = await user.checkPassword(password);
       if (!passwordCorrect) {
-        return { ok: passwordCorrect, error: '로그인 실패했습니다' };
+        return { ok: false, error: '비밀번호가 틀립니다.' };
       }
       //sign에 user.id만 넘겨주는것은 이 프로젝트에서만 사용 할것이기때문에
       //만약 다른 프로젝트에서 더 크게 사용한다면 object형태로 넘겨주면된다
       const token = this.jwtService.sign(user.id);
-      return { ok: passwordCorrect, error: '로그인 성공했습니다', token };
+      return { ok: true, error: '로그인 성공했습니다', token };
     } catch (error) {
-      return { ok: false, error };
+      return { ok: false, error: '로그인 실패했습니다' };
     }
   }
 
   async findById(id: number): Promise<UserProfileOutput> {
-    const user = await this.users.findOneBy({ id });
-    return { ok: true, user };
+    try {
+      const user = await this.users.findOneOrFail({ where: { id } });
+      return { ok: true, user };
+    } catch (e) {
+      return { ok: false, error: '유저를 찾을 수 없습니다' };
+    }
   }
 
   async editProfile(
@@ -87,8 +91,8 @@ export class UsersService {
     { email, password }: EditProfileInput,
   ): Promise<EditProfileOutput> {
     //update()를 사용하면 단순히 query만 보내는거라 entity에 있는 데코레이터 사용불가능
-    const user = await this.users.findOneBy({ id });
     try {
+      const user = await this.users.findOne({ where: { id } });
       if (email) {
         user.email = email;
         user.verified = false;
@@ -104,7 +108,7 @@ export class UsersService {
       return { ok: true };
     } catch (error) {
       console.log(error);
-      return { ok: false, error };
+      return { ok: false, error: '변경 할 수 없습니다' };
     }
   }
 
@@ -124,10 +128,10 @@ export class UsersService {
         return { ok: true };
       }
 
-      return { ok: false };
+      return { ok: false, error: '인증실패했습니다' };
     } catch (e) {
       console.log(e);
-      return { ok: false, error: e };
+      return { ok: false, error: '실패했습니다' };
     }
   }
 }
