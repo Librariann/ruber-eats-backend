@@ -122,6 +122,7 @@ describe('UserService', () => {
     it('유저 생성에 실패하면 에러를 떨군다', async () => {
       usersRepository.findOne.mockRejectedValue(new Error(':)'));
       const result = await service.createAccount(createAccountArgs);
+      console.log(result);
       expect(result).toEqual({
         ok: false,
         error: '계정을 생성할 수 없습니다',
@@ -192,7 +193,7 @@ describe('UserService', () => {
       expect(result).toEqual({ ok: true, user: findByIdArgs });
     });
 
-    it('유저를 찾이못해서 실패했을때', async () => {
+    it('유저를 찾지못해서 실패했을때', async () => {
       usersRepository.findOneOrFail.mockRejectedValue(new Error());
       const result = await service.findById(1);
       expect(result).toEqual({ ok: false, error: '유저를 찾을 수 없습니다' });
@@ -226,8 +227,8 @@ describe('UserService', () => {
         editProfileArgs.input,
       );
 
-      expect(usersRepository.findOne).toHaveBeenCalledTimes(1);
-      expect(usersRepository.findOne).toHaveBeenCalledWith(expect.any(Object));
+      expect(usersRepository.save).toHaveBeenCalledTimes(1);
+      expect(usersRepository.save).toHaveBeenCalledWith(expect.any(Object));
       expect(verificationsRepository.create).toHaveBeenCalledWith({
         user: newUser,
       });
@@ -289,13 +290,13 @@ describe('UserService', () => {
       verificationsRepository.findOne.mockResolvedValue(undefined);
 
       const result = await service.verifyEmail('');
-      console.log(result);
       expect(result).toEqual({ ok: false, error: '인증실패했습니다' });
     });
 
     it('예외처리', async () => {
       verificationsRepository.findOne.mockRejectedValue(new Error());
       const result = await service.verifyEmail('');
+      console.log(result);
       expect(result).toEqual({ ok: false, error: '실패했습니다' });
     });
   });
