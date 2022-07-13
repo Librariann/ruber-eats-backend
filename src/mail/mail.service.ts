@@ -23,7 +23,6 @@ export class MailService {
     emailVars.forEach((eVar) =>
       form.append(`v:${eVar.key}`, `v:${eVar.value}`),
     );
-    console.log('mailsend');
     try {
       await got(`https://api.mailgun.net/v3/${this.options.domain}/messages`, {
         method: 'POST',

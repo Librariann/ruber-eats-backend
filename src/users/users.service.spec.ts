@@ -122,7 +122,6 @@ describe('UserService', () => {
     it('유저 생성에 실패하면 에러를 떨군다', async () => {
       usersRepository.findOne.mockRejectedValue(new Error(':)'));
       const result = await service.createAccount(createAccountArgs);
-      console.log(result);
       expect(result).toEqual({
         ok: false,
         error: '계정을 생성할 수 없습니다',
@@ -296,7 +295,6 @@ describe('UserService', () => {
     it('예외처리', async () => {
       verificationsRepository.findOne.mockRejectedValue(new Error());
       const result = await service.verifyEmail('');
-      console.log(result);
       expect(result).toEqual({ ok: false, error: '실패했습니다' });
     });
   });

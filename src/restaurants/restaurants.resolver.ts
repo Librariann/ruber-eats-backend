@@ -21,7 +21,6 @@ export class RestaurantResolver {
       await this.restaurantService.createREstaurant(createRestaurantDto);
       return true;
     } catch (e) {
-      console.log(e);
       return false;
     }
   }

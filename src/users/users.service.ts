@@ -96,6 +96,7 @@ export class UsersService {
       if (email) {
         user.email = email;
         user.verified = false;
+        await this.verifications.delete({ user: { id: user.id } });
         const verification = await this.verifications.save(
           this.verifications.create({ user }),
         );
@@ -130,7 +131,6 @@ export class UsersService {
 
       return { ok: false, error: '인증실패했습니다' };
     } catch (e) {
-      console.log(e);
       return { ok: false, error: '실패했습니다' };
     }
   }
