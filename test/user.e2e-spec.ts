@@ -6,7 +6,6 @@ import { DataSource, DataSourceOptions, Repository } from 'typeorm';
 import { User } from 'src/users/entities/user.entity';
 import { Verification } from 'src/users/entities/verification.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { ok } from 'assert';
 
 jest.mock('got', () => {
   return {
@@ -195,6 +194,7 @@ describe('UserModule (e2e)', () => {
           expect(id).toBe(userId);
         });
     });
+
     it('should not find a profile', () => {
       return privateTest(`{
         userProfile(userId: 444){
@@ -239,6 +239,7 @@ describe('UserModule (e2e)', () => {
           expect(email).toBe(testUser.email);
         });
     });
+
     it('should not allow logged out user', () => {
       return publicTest(`{
         me{
@@ -282,6 +283,7 @@ describe('UserModule (e2e)', () => {
           expect(error).toBe(null);
         });
     });
+
     it('should have new email', () => {
       return privateTest(`
       {
