@@ -7,6 +7,10 @@ import {
   CreateRestaurantInput,
   CreateRestaurantOuput,
 } from './dto/create-restaurant.dto';
+import {
+  EditRestaurantInput,
+  EditRestaurantOutput,
+} from './dto/edit-restaurant.dto';
 import { RestaurantService } from './restaurants.service';
 
 @Resolver()
@@ -23,5 +27,14 @@ export class RestaurantResolver {
       authUser,
       createRestaurantInput,
     );
+  }
+
+  @Mutation(() => EditRestaurantOutput)
+  @Role(['Owner'])
+  editRestaurant(
+    @AuthUser() authUser: User,
+    @Args('input') editRestaurant: EditRestaurantInput,
+  ): EditRestaurantOutput {
+    return { ok: true };
   }
 }
