@@ -7,6 +7,10 @@ import {
   CreateRestaurantOuput,
 } from './dto/create-restaurant.dto';
 import {
+  DeleteRestaurantInput,
+  DeleteRestaurantOutput,
+} from './dto/delete-restaurant.dto';
+import {
   EditRestaurantInput,
   EditRestaurantOutput,
 } from './dto/edit-restaurant.dto';
@@ -22,19 +26,6 @@ export class RestaurantService {
     private readonly categories: CategoryRepository,
   ) {}
 
-  async getOrCreate(name: string): Promise<Category> {
-    const categoryName = name.trim().toLowerCase();
-    const categorySlug = categoryName.replace(/ /g, '-');
-    let category = await this.categories.findOne({
-      where: { slug: categorySlug },
-    });
-    if (!category) {
-      category = await this.categories.save(
-        this.categories.create({ slug: categorySlug, name: categoryName }),
-      );
-    }
-    return category;
-  }
   async createRestaurant(
     owner: User,
     createRestaurantInput: CreateRestaurantInput,
@@ -45,15 +36,19 @@ export class RestaurantService {
       const category = await this.categories.getOrCreate(
         createRestaurantInput.categoryName,
       );
+      // const category = await this.categories.getOrCreate(
+      //   createRestaurantInput.categoryName,
+      // );
       newRestaurant.category = category;
       await this.restaurants.save(newRestaurant);
       return {
         ok: true,
       };
     } catch (e) {
+      console.log(e);
       return {
         ok: false,
-        error: '레스토랑을 생성할 수 없습ㄴ디ㅏ',
+        error: '레스토랑을 생성할 수 없습니다',
       };
     }
   }
@@ -88,7 +83,7 @@ export class RestaurantService {
         {
           id: editRestaurantInput.restaurantId,
           ...editRestaurantInput,
-          ...(category && { category }),
+          ...(category && { category }), //category가 있으면 category object를 return
         },
       ]);
       return {
@@ -97,6 +92,38 @@ export class RestaurantService {
     } catch (e) {
       return {
         ok: false,
+      };
+    }
+  }
+
+  async deleteRestaurant(
+    owner: User,
+    { restaurantId }: DeleteRestaurantInput,
+  ): Promise<DeleteRestaurantOutput> {
+    try {
+      const restaurant = await this.restaurants.findOne({
+        where: { id: restaurantId },
+      });
+      if (!restaurant) {
+        return {
+          ok: false,
+          error: 'Restaurant not found',
+        };
+      }
+      if (owner.id !== restaurant.ownerId) {
+        return {
+          ok: false,
+          error: "You can't delete a restaurant that you don't own",
+        };
+      }
+      await this.restaurants.delete(restaurantId);
+      return {
+        ok: true,
+      };
+    } catch (e) {
+      return {
+        ok: false,
+        error: 'Could not delete restaurant',
       };
     }
   }
