@@ -5,9 +5,11 @@ import { Restaurant } from 'src/restaurants/entities/restaurant.entity';
 import { User, UserRole } from 'src/users/entities/user.entity';
 import { Repository } from 'typeorm';
 import { CreateOrderInput, CreateOrderOutput } from './dtos/create-order.dto';
-import { GetOrdersInput, GetOrdersOutput } from './dtos/get-order.dto';
+import { EditOrderInput, EditOrderOutput } from './dtos/edit-order.dto';
+import { GetOrderInput, GetOrderOutput } from './dtos/get-order.dto';
+import { GetOrdersInput, GetOrdersOutput } from './dtos/get-orders.dto';
 import { OrderItem } from './entities/order-item.entity';
-import { Order } from './entities/order.entity';
+import { Order, OrderStatus } from './entities/order.entity';
 
 @Injectable()
 export class OrderService {
@@ -108,12 +110,14 @@ export class OrderService {
         orders = await this.orders.find({
           where: {
             customer: true,
+            ...(status && { status }),
           },
         });
       } else if (user.role === UserRole.Delivery) {
         orders = await this.orders.find({
           where: {
             driver: true,
+            ...(status && { status }),
           },
         });
       } else if (user.role === UserRole.Owner) {
@@ -125,6 +129,9 @@ export class OrderService {
         });
 
         orders = restaurants.map((restaurant) => restaurant.orders).flat(1);
+        if (status) {
+          orders = orders.filter((order) => order.status === status);
+        }
       }
       return {
         ok: true,
@@ -134,6 +141,112 @@ export class OrderService {
       return {
         ok: false,
         error: 'Could not get orders',
+      };
+    }
+  }
+
+  canAllowedOrder(user: User, order: Order): boolean {
+    let allowed = true;
+    if (user.role === UserRole.Client && order.customerId !== user.id) {
+      allowed = false;
+    }
+    if (user.role === UserRole.Delivery && order.driverId !== user.id) {
+      allowed = false;
+    }
+    if (user.role === UserRole.Owner && order.restaurant.ownerId !== user.id) {
+      allowed = false;
+    }
+    return allowed;
+  }
+
+  async getOrder(user: User, { id }: GetOrderInput): Promise<GetOrderOutput> {
+    try {
+      const order = await this.orders.findOne({
+        where: { id },
+        relations: ['restaurant'],
+      });
+      if (!order) {
+        return {
+          ok: false,
+          error: 'Order not found',
+        };
+      }
+      if (!this.canAllowedOrder(user, order)) {
+        return {
+          ok: false,
+          error: "You can't see that",
+        };
+      }
+      return {
+        ok: true,
+        order,
+      };
+    } catch {
+      return {
+        ok: false,
+        error: 'Could not load order',
+      };
+    }
+  }
+
+  async editOrder(
+    user: User,
+    { id, status }: EditOrderInput,
+  ): Promise<EditOrderOutput> {
+    try {
+      const order = await this.orders.findOne({
+        where: { id },
+        relations: ['restaurant'],
+      });
+      if (!order) {
+        return {
+          ok: false,
+          error: 'Order not found',
+        };
+      }
+      if (!this.canAllowedOrder(user, order)) {
+        return {
+          ok: false,
+          error: "You can't see this",
+        };
+      }
+
+      let canEdit = true;
+      if (user.role === UserRole.Client) {
+        canEdit = false;
+      }
+      if (user.role === UserRole.Owner) {
+        if (status !== OrderStatus.Cooking && status !== OrderStatus.Cooked) {
+          canEdit = false;
+        }
+      }
+      if (user.role === UserRole.Delivery) {
+        if (
+          status !== OrderStatus.PickedUp &&
+          status !== OrderStatus.Delivered
+        ) {
+          canEdit = false;
+        }
+      }
+      if (!canEdit) {
+        return {
+          ok: false,
+          error: "You can't do that.",
+        };
+      }
+      await this.orders.save([
+        {
+          id,
+          status,
+        },
+      ]);
+      return {
+        ok: true,
+      };
+    } catch {
+      return {
+        ok: false,
+        error: 'Could not edit order',
       };
     }
   }
