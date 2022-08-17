@@ -6,6 +6,7 @@ import { Category } from './category.entity';
 import { User } from 'src/users/entities/user.entity';
 import { Dish } from './dish.entity';
 import { Order } from 'src/orders/entities/order.entity';
+import { truncate } from 'fs/promises';
 
 @InputType('RestaurantInputType', { isAbstract: true })
 @ObjectType() //GraphQL decorator
@@ -48,4 +49,12 @@ export class Restaurant extends CoreEntity {
   @Field(() => [Dish])
   @OneToMany(() => Dish, (dish) => dish.restaurant)
   menu: Dish[];
+
+  @Field(() => Boolean)
+  @Column({ default: false })
+  isPromoted: boolean;
+
+  @Field(() => Date, { nullable: true })
+  @Column({ nullable: true })
+  promotedUntil?: Date;
 }

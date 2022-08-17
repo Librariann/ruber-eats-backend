@@ -2,7 +2,7 @@ import { Module } from '@nestjs/common';
 import * as Joi from 'joi';
 import { GraphQLModule } from '@nestjs/graphql';
 import { TypeOrmModule } from '@nestjs/typeorm';
-import { ApolloDriver, ApolloDriverConfig } from '@nestjs/apollo';
+import { ApolloDriver } from '@nestjs/apollo';
 import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from './users/users.module';
 import { User } from './users/entities/user.entity';
@@ -19,6 +19,9 @@ import { Order } from './orders/entities/order.entity';
 import { OrderItem } from './orders/entities/order-item.entity';
 import { Context } from 'apollo-server-core';
 import { CommonModule } from './common/common.module';
+import { PaymentsModule } from './payments/payments.module';
+import { Payment } from './payments/entities/payment.entity';
+import { ScheduleModule } from '@nestjs/schedule';
 const TOKEN_KEY = 'x-jwt';
 
 @Module({
@@ -80,8 +83,10 @@ const TOKEN_KEY = 'x-jwt';
         Dish,
         Order,
         OrderItem,
+        Payment,
       ],
     }),
+    ScheduleModule.forRoot(),
     JwtModule.forRoot({
       privateKey: process.env.SECRET_KEY,
     }),
@@ -95,6 +100,7 @@ const TOKEN_KEY = 'x-jwt';
     RestaurantsModule,
     OrdersModule,
     CommonModule,
+    PaymentsModule,
   ],
   controllers: [],
   providers: [],
