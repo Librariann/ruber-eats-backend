@@ -37,6 +37,7 @@ export class Order extends CoreEntity {
   @ManyToOne(() => User, (user) => user.orders, {
     onDelete: 'SET NULL',
     nullable: true,
+    eager: true,
   })
   customer?: User;
 
@@ -47,6 +48,7 @@ export class Order extends CoreEntity {
   @ManyToOne(() => User, (user) => user.rides, {
     onDelete: 'SET NULL',
     nullable: true,
+    eager: true,
   })
   driver?: User;
 
@@ -57,11 +59,12 @@ export class Order extends CoreEntity {
   @ManyToOne(() => Restaurant, (restaurant) => restaurant.orders, {
     onDelete: 'SET NULL',
     nullable: true,
+    eager: true,
   })
   restaurant?: Restaurant;
 
   @Field(() => [OrderItem])
-  @ManyToMany(() => OrderItem) // through table 생성.. in between table -> TypeORM이 개발자를 위해 생성해준다.
+  @ManyToMany(() => OrderItem, { eager: true }) // through table 생성.. in between table -> TypeORM이 개발자를 위해 생성해준다.
   @JoinTable()
   items: OrderItem[];
 

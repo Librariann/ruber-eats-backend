@@ -1,13 +1,6 @@
 import { Field, InputType, ObjectType } from '@nestjs/graphql';
-import {
-  Column,
-  Entity,
-  ManyToOne,
-  OneToMany,
-  PrimaryGeneratedColumn,
-  RelationId,
-} from 'typeorm';
-import { IsBoolean, IsOptional, IsString, Length } from 'class-validator';
+import { Column, Entity, ManyToOne, OneToMany, RelationId } from 'typeorm';
+import { IsString, Length } from 'class-validator';
 import { CoreEntity } from 'src/common/entities/core.entity';
 import { Category } from './category.entity';
 import { User } from 'src/users/entities/user.entity';
