@@ -16,8 +16,8 @@ export class UploadsController {
   async uploadFile(@UploadedFile() file) {
     AWS.config.update({
       credentials: {
-        accessKeyId: 'AKIA44UVUVPJ7BVWU7XU',
-        secretAccessKey: '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',
+        accessKeyId: process.env.S3_SECRET_KEY,
+        secretAccessKey: process.env.S3_SECRET_ACCESS_KEY,
       },
     });
     try {
@@ -30,7 +30,7 @@ export class UploadsController {
           ACL: 'public-read',
         })
         .promise();
-      const url = `https://${BUCKET_NAME}.s3.amazonaws.com/16623662605621827d97bc51564640.jpeg`;
+      const url = `https://${BUCKET_NAME}.s3.amazonaws.com/${objectName}`;
       return { url };
     } catch (e) {
       console.log(e);
