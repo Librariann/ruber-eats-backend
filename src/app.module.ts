@@ -45,6 +45,7 @@ const TOKEN_KEY = 'x-jwt';
     }),
     GraphQLModule.forRoot({
       autoSchemaFile: true, //메모리에 생성한다
+      introspection: true,
       driver: ApolloDriver,
       subscriptions: {
         'subscriptions-transport-ws': {
