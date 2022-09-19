@@ -259,7 +259,6 @@ export class OrderService {
         }
       }
       await this.pubSub.publish(NEW_ORDER_UPDATE, { orderUpdates: newOrder });
-      console.log('pubsub comp');
       return {
         ok: true,
       };
