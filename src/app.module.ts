@@ -45,7 +45,8 @@ const TOKEN_KEY = 'x-jwt';
     }),
     GraphQLModule.forRoot({
       autoSchemaFile: true, //메모리에 생성한다
-      introspection: true,
+      introspection: true, //heroku 배포시 get query missing이 뜨는것 방지
+      playground: true, //heroku 배포시 get query missing이 뜨는것 방지
       driver: ApolloDriver,
       subscriptions: {
         'subscriptions-transport-ws': {
