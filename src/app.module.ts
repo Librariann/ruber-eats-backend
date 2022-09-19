@@ -44,6 +44,8 @@ const TOKEN_KEY = 'x-jwt';
       }),
     }),
     GraphQLModule.forRoot({
+      cache: 'bounded',
+      persistedQueries: false,
       autoSchemaFile: true, //메모리에 생성한다
       // introspection: process.env.NODE_ENV !== 'production',
       // playground: process.env.NODE_ENV !== 'production',
