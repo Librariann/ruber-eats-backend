@@ -50,19 +50,19 @@ const TOKEN_KEY = 'x-jwt';
       subscriptions: {
         'subscriptions-transport-ws': {
           onConnect: (connectionParams) => {
-            console.log('connectionParams', connectionParams);
-            const authToken = connectionParams['X-JWT'];
+            const authToken = connectionParams[TOKEN_KEY];
             if (!authToken) {
               throw new Error('Token is not valid');
             }
             const token = authToken;
+
             return { token };
           },
         },
       },
       context: ({ req, connection }) => {
         return {
-          token: req ? req.headers[TOKEN_KEY] : connection.context['X-JWT'],
+          token: req ? req.headers[TOKEN_KEY] : connection.context[TOKEN_KEY],
         };
       },
     }),
