@@ -46,6 +46,7 @@ export class UsersService {
       this.mailService.sendVerificationEmail(user.email, verification.code);
       return { ok: true };
     } catch (e) {
+      console.log(e);
       //make error
       return { ok: false, error: '계정을 생성할 수 없습니다' };
     }
