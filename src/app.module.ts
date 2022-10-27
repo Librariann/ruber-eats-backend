@@ -80,7 +80,7 @@ const TOKEN_KEY = 'x-jwt';
             password: process.env.DB_PASSWORD,
             database: process.env.DB_NAME,
           }),
-      synchronize: true,
+      synchronize: true, //prod 에선 절대로 true로 설정하지 말것
       logging:
         process.env.NODE_ENV !== 'production' &&
         process.env.NODE_ENV !== 'test',
