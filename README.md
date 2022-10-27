@@ -2,7 +2,7 @@
   <image src="./repo/logo.png" />
 </p>
 
-# Ruber Eats
+# <p align="center">Ruber Eats</p>
 
 <p>음식 주문 서비스 Ruber Eats 입니다!</p>
 
@@ -12,5 +12,5 @@
   <div># 인프라</div>
 </p>
 
-<>
-</>
+<p>
+</p>
