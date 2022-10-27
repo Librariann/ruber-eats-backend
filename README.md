@@ -1,6 +1,6 @@
 ## 1. 서비스 소개
 
-음식 주문 서비스 Ruber Eats 입니다!
+- 음식 주문 서비스 Ruber Eats 입니다!
 
 ## 2. Information
 
@@ -12,6 +12,9 @@
 ## 3. Ruber Eats의 기술스택
 
 #### 프론트엔드
+
+<img src="https://img.shields.io/badge/javascript-F7DF1E?style=for-the-badge&logo=javascript&logoColor=white">
+<img src="https://img.shields.io/badge/ESLint-#4B32C3?style=for-the-badge&logo=ESLint&logoColor=white">
 
 #### 백엔드
 
