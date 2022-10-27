@@ -12,7 +12,7 @@
 
 #### 프론트엔드
 
-![react](https://user-images.githubusercontent.com/30823551/198262194-ed2abb12-69df-44df-a190-410347d74133.svg)
+![frontend](https://user-images.githubusercontent.com/30823551/198270186-9a237fb6-ff41-4f96-bd64-8ad691898e2d.jpg)
 
 #### 백엔드
 
