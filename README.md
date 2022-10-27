@@ -1,8 +1,4 @@
-<p align="center">
-  <image src="./repo/logo.png" />
-</p>
-
-# <p align="center">Ruber Eats</p>
+# <p align="center">Ruber <span style="color:red">Eats</span></p>
 
 <p>음식 주문 서비스 Ruber Eats 입니다!</p>
 
