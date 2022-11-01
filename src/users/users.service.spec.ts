@@ -93,7 +93,6 @@ describe('UserService', () => {
         code: 'code',
       });
       const result = await service.createAccount(createAccountArgs);
-
       expect(usersRepository.create).toHaveBeenCalledTimes(1); //1번만 불릴꺼라 예상하는 함수
       expect(usersRepository.create).toHaveBeenCalledWith(createAccountArgs);
 

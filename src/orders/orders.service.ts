@@ -49,20 +49,23 @@ export class OrderService {
       }
 
       let orderFinalPrice = 0;
+
       const orderItems: OrderItem[] = [];
+
       for (const item of items) {
         const dish = await this.dishes.findOne({
           where: { id: item.dishId },
         });
+
         if (!dish) {
           return {
             ok: false,
             error: 'Dish not found',
           };
         }
+
         let dishFinalPrice = dish.price;
         for (const itemOption of item.options) {
-          console.log(itemOption);
           const dishOption = dish.options.find(
             (dishOption) => dishOption.name === itemOption.name,
           );
@@ -90,6 +93,7 @@ export class OrderService {
         );
         orderItems.push(orderItem);
       }
+
       const order = await this.orders.save(
         this.orders.create({
           customer,
@@ -98,9 +102,12 @@ export class OrderService {
           items: orderItems,
         }),
       );
+
+      console.log(order);
       await this.pubSub.publish(NEW_PENDING_ORDER, {
         pendingOrders: { order, ownerId: restaurant.ownerId },
       });
+      console.log(order.id);
       return {
         ok: true,
         orderId: order.id,
