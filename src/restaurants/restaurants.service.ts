@@ -2,7 +2,7 @@ import { Inject, Injectable } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
 import e from 'express';
 import { User } from 'src/users/entities/user.entity';
-import { Like, Raw, Repository } from 'typeorm';
+import { ILike, Like, Raw, Repository } from 'typeorm';
 import { AllCategoriesOutput } from './dto/all-categories.dto';
 import { CategoryInput, CategoryOutput } from './dto/category.dto';
 import { CreateDishInput, CreateDishOutput } from './dto/create-dish.dto';
@@ -317,7 +317,9 @@ export class RestaurantService {
     try {
       const [restaurants, totalResults] = await this.restaurants.findAndCount({
         where: {
-          name: Raw((name) => `${name} ILIKE '%${query}%'`),
+          //TODO: Raw Query Mocking 방법 찾아볼것
+          // name: Raw((name) => `${name} ILIKE '%${query}%'`),
+          name: ILike(`%${query}%'`),
         },
         skip: (page - 1) * 25,
         take: 25,
@@ -347,13 +349,13 @@ export class RestaurantService {
       if (!restaurant) {
         return {
           ok: false,
-          error: 'Restaurant not found',
+          error: '음식점을 찾을 수 없습니다',
         };
       }
       if (owner.id !== restaurant.ownerId) {
         return {
           ok: false,
-          error: "You can't do that.",
+          error: '가게 주인이 아닙니다 다시한번 확인해주세요.',
         };
       }
 
@@ -368,7 +370,7 @@ export class RestaurantService {
       console.log(e);
       return {
         ok: false,
-        error: 'Could not create dish',
+        error: '음식을 등록 할 수 없습니다.',
       };
     }
   }
@@ -385,13 +387,13 @@ export class RestaurantService {
       if (!dish) {
         return {
           ok: false,
-          error: 'Dish not found',
+          error: '음식을 찾을 수 없습니다',
         };
       }
       if (dish.restaurant.ownerId !== owner.id) {
         return {
           ok: false,
-          error: "You can't do that",
+          error: '가게 주인이 아닙니다 다시한번 확인해주세요.',
         };
       }
       await this.dishes.save([
@@ -406,7 +408,7 @@ export class RestaurantService {
     } catch {
       return {
         ok: false,
-        error: 'Could not save dish',
+        error: '음식을 수정 할 수 없습니다.',
       };
     }
   }
@@ -423,13 +425,13 @@ export class RestaurantService {
       if (!dish) {
         return {
           ok: false,
-          error: 'Dish not found',
+          error: '음식을 찾을 수 없습니다',
         };
       }
       if (dish.restaurant.ownerId !== owner.id) {
         return {
           ok: false,
-          error: "You can't do that",
+          error: '가게 주인이 아닙니다 다시한번 확인해주세요.',
         };
       }
       await this.dishes.delete(deleteDishInput.dishId);
@@ -439,7 +441,7 @@ export class RestaurantService {
     } catch {
       return {
         ok: false,
-        error: 'Could not delete dish',
+        error: '음식을 삭제 할 수 없습니다.',
       };
     }
   }

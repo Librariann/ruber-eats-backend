@@ -55,6 +55,7 @@ describe('Restaurants Service', () => {
   let service: RestaurantService;
   let categoryRepository: CategoryRepository;
   let restaurantRepository: MockRepository<Restaurant>;
+  let dishRepository: MockRepository<Dish>;
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
@@ -74,6 +75,7 @@ describe('Restaurants Service', () => {
     service = module.get<RestaurantService>(RestaurantService);
     categoryRepository = module.get<CategoryRepository>(CategoryRepository);
     restaurantRepository = module.get(getRepositoryToken(Restaurant));
+    dishRepository = module.get(getRepositoryToken(Dish));
   });
 
   it('Should be defiend', () => {
@@ -551,13 +553,14 @@ describe('Restaurants Service', () => {
 
   describe('Search Restaurant By Name', () => {
     it('음식점 이름으로 검색 성공', async () => {
+      const query = 'rest';
       restaurantRepository.findAndCount.mockResolvedValue([
         [...restaurants],
         restaurants.length,
       ]);
 
       const result = await service.searchRestaurantByName({
-        query: 'rest',
+        query,
         page: 1,
       });
 
@@ -582,5 +585,134 @@ describe('Restaurants Service', () => {
         error: '음식점을 검색 할 수 없습니다.',
       });
     });
+  });
+
+  describe('Create Dish', () => {
+    const createDishInput = {
+      name: 'testName',
+      price: 10,
+      description: 'veryTestDesc',
+      options: [],
+      restaurantId: 1,
+    };
+
+    it('음식점을 찾을 수 없을때 ', async () => {
+      restaurantRepository.findOne.mockResolvedValue(null);
+
+      const result = await service.createDish(restaurantUser, createDishInput);
+
+      expect(result).toEqual({
+        ok: false,
+        error: '음식점을 찾을 수 없습니다',
+      });
+    });
+
+    it('가게 주인이 아닐때', async () => {
+      restaurantRepository.findOne.mockResolvedValue({ ownerId: 2 });
+
+      const result = await service.createDish(restaurantUser, createDishInput);
+
+      expect(result).toEqual({
+        ok: false,
+        error: '가게 주인이 아닙니다 다시한번 확인해주세요.',
+      });
+    });
+
+    it('음식 등록 완료', async () => {
+      const restaurantArgs = { ownerId: 1 };
+      restaurantRepository.findOne.mockResolvedValue(restaurantArgs);
+      dishRepository.create.mockReturnValue(restaurantArgs);
+      dishRepository.save.mockResolvedValue(restaurantArgs);
+
+      const result = await service.createDish(restaurantUser, createDishInput);
+      console.log(result);
+
+      expect(dishRepository.create).toHaveBeenCalledTimes(1);
+      expect(dishRepository.create).toHaveBeenCalledWith(expect.any(Object));
+
+      expect(dishRepository.save).toHaveBeenCalledTimes(1);
+      expect(dishRepository.save).toHaveBeenCalledWith(restaurantArgs);
+
+      expect(result).toEqual({
+        ok: true,
+      });
+    });
+
+    it('음식 등록 실패', async () => {
+      restaurantRepository.findOne.mockRejectedValue(new Error(':)'));
+
+      const result = await service.createDish(restaurantUser, createDishInput);
+
+      expect(result).toEqual({
+        ok: false,
+        error: '음식을 등록 할 수 없습니다.',
+      });
+    });
+  });
+
+  describe('Edit Dish', () => {
+    const newDish = {
+      dishId: 1,
+      name: 'editDish',
+      price: 9999,
+    };
+
+    const oldDish = {
+      dishId: 1,
+      name: 'oldDish',
+      price: 1111,
+      restaurant: { ownerId: 1 },
+    };
+
+    it('음식을 찾을 수 없을때', async () => {
+      dishRepository.findOne.mockResolvedValue(null);
+
+      const result = await service.editDish(restaurantUser, newDish);
+
+      expect(result).toEqual({
+        ok: false,
+        error: '음식을 찾을 수 없습니다',
+      });
+    });
+
+    it('가게 주인이 아닐때', async () => {
+      dishRepository.findOne.mockResolvedValue({ restaurant: { ownerId: 2 } });
+
+      const result = await service.editDish(restaurantUser, newDish);
+
+      expect(result).toEqual({
+        ok: false,
+        error: '가게 주인이 아닙니다 다시한번 확인해주세요.',
+      });
+    });
+
+    it('음식 수정 완료', async () => {
+      dishRepository.findOne.mockResolvedValue(oldDish);
+      dishRepository.save.mockResolvedValue(newDish);
+
+      const result = await service.editDish(restaurantUser, newDish);
+
+      expect(dishRepository.save).toHaveBeenCalledTimes(1);
+      expect(dishRepository.save).toHaveBeenCalledWith(expect.any(Object));
+
+      expect(result).toEqual({
+        ok: true,
+      });
+    });
+
+    it('음식 수정 실패', async () => {
+      dishRepository.findOne.mockRejectedValue(new Error(':('));
+
+      const result = await service.editDish(restaurantUser, newDish);
+
+      expect(result).toEqual({
+        ok: false,
+        error: '음식을 수정 할 수 없습니다.',
+      });
+    });
+  });
+
+  describe('Delete Dish', () => {
+    it.todo('Deletedish');
   });
 });
