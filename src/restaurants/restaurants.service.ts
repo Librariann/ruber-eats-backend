@@ -415,11 +415,11 @@ export class RestaurantService {
 
   async deleteDish(
     owner: User,
-    deleteDishInput: DeleteDishInput,
+    { dishId }: DeleteDishInput,
   ): Promise<DeleteDishOutput> {
     try {
       const dish = await this.dishes.findOne({
-        where: { id: deleteDishInput.dishId },
+        where: { id: dishId },
         relations: ['restaurant'],
       });
       if (!dish) {
@@ -434,7 +434,7 @@ export class RestaurantService {
           error: '가게 주인이 아닙니다 다시한번 확인해주세요.',
         };
       }
-      await this.dishes.delete(deleteDishInput.dishId);
+      await this.dishes.delete(dishId);
       return {
         ok: true,
       };

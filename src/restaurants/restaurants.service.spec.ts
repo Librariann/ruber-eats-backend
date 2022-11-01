@@ -713,6 +713,62 @@ describe('Restaurants Service', () => {
   });
 
   describe('Delete Dish', () => {
-    it.todo('Deletedish');
+    const testDeleteDishInput = { dishId: 1 };
+    it('음식을 찾을 수 없을 때', async () => {
+      dishRepository.findOne.mockResolvedValue(null);
+
+      const result = await service.deleteDish(
+        restaurantUser,
+        testDeleteDishInput,
+      );
+
+      expect(result).toEqual({
+        ok: false,
+        error: '음식을 찾을 수 없습니다',
+      });
+    });
+
+    it('가게 주인이 아닐 때', async () => {
+      dishRepository.findOne.mockResolvedValue({ restaurant: { ownerId: 2 } });
+
+      const result = await service.deleteDish(
+        restaurantUser,
+        testDeleteDishInput,
+      );
+
+      expect(result).toEqual({
+        ok: false,
+        error: '가게 주인이 아닙니다 다시한번 확인해주세요.',
+      });
+    });
+
+    it('음식 삭제 성공', async () => {
+      dishRepository.findOne.mockResolvedValue({ restaurant: { ownerId: 1 } });
+
+      const result = await service.deleteDish(
+        restaurantUser,
+        testDeleteDishInput,
+      );
+
+      expect(dishRepository.delete).toHaveBeenCalledTimes(1);
+
+      expect(result).toEqual({
+        ok: true,
+      });
+    });
+
+    it('음식 삭제 실패', async () => {
+      dishRepository.findOne.mockRejectedValue(new Error(':('));
+
+      const result = await service.deleteDish(
+        restaurantUser,
+        testDeleteDishInput,
+      );
+
+      expect(result).toEqual({
+        ok: false,
+        error: '음식을 삭제 할 수 없습니다.',
+      });
+    });
   });
 });
