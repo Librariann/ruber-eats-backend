@@ -14,6 +14,7 @@ const mockRepository = () => ({
   delete: jest.fn(),
   count: jest.fn(),
   find: jest.fn(),
+  findAndCount: jest.fn(),
 });
 
 const restaurantUser = {
@@ -276,7 +277,7 @@ describe('Restaurants Service', () => {
       },
     ];
 
-    it('Get Categories Success', async () => {
+    it('카테고리 불러오기 성공', async () => {
       jest.spyOn(categoryRepository, 'find').mockResolvedValue(categories);
       const result = await service.allCategories();
 
@@ -286,7 +287,7 @@ describe('Restaurants Service', () => {
       });
     });
 
-    it('Get Categories Failed', async () => {
+    it('카테고리 불러오기 실패', async () => {
       jest.spyOn(categoryRepository, 'find').mockRejectedValue(new Error(':)'));
       const result = await service.allCategories();
       expect(result).toEqual({
@@ -295,7 +296,7 @@ describe('Restaurants Service', () => {
       });
     });
 
-    it('Categories Count', async () => {
+    it('카테고리 갯수', async () => {
       restaurantRepository.count.mockResolvedValue({ totalResults: 1 });
       const result = await service.countRestaurants(categories[0]);
 
@@ -308,7 +309,7 @@ describe('Restaurants Service', () => {
       slug: 'category',
       page: 1,
     };
-    const categoryArgs = {
+    const category = {
       id: 1,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -317,7 +318,7 @@ describe('Restaurants Service', () => {
       slug: 'testSlug',
       restaurants: [],
     };
-    const restaurantsArgs = [
+    const restaurants = [
       {
         id: 1,
         createdAt: new Date(),
@@ -341,18 +342,18 @@ describe('Restaurants Service', () => {
     });
 
     it('카테고리 검색 성공', async () => {
-      jest.spyOn(categoryRepository, 'findOne').mockResolvedValue(categoryArgs);
-      restaurantRepository.count.mockResolvedValue(restaurantsArgs.length);
-      restaurantRepository.find.mockResolvedValue(restaurantsArgs);
+      jest.spyOn(categoryRepository, 'findOne').mockResolvedValue(category);
+      restaurantRepository.count.mockResolvedValue(restaurants.length);
+      restaurantRepository.find.mockResolvedValue(restaurants);
 
       const result = await service.findCategoryBySlug(categoryTestInput);
 
       expect(result).toEqual({
         ok: true,
-        category: categoryArgs,
-        restaurants: restaurantsArgs,
-        totalPages: Math.ceil(restaurantsArgs.length / 25),
-        totalResults: restaurantsArgs.length,
+        category,
+        restaurants,
+        totalPages: Math.ceil(restaurants.length / 25),
+        totalResults: restaurants.length,
       });
     });
 
@@ -366,6 +367,88 @@ describe('Restaurants Service', () => {
       expect(result).toEqual({
         ok: false,
         error: '카테고리를 가져올 수 없습니다.',
+      });
+    });
+  });
+
+  describe('Get All Restaurants', () => {
+    const restaurants = [
+      {
+        id: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        name: 'testRestaurants',
+        coverImage: null,
+        address: 'testAddress',
+        isPromoted: false,
+        promotedUntil: null,
+        category: [],
+        owner: [],
+        ownerId: 15,
+      },
+    ];
+
+    it('음식점 불러오기 성공', async () => {
+      restaurantRepository.findAndCount.mockResolvedValue([
+        [...restaurants],
+        restaurants.length,
+      ]);
+
+      const result = await service.allRestaurants({ page: 1 });
+      expect(result).toEqual({
+        ok: true,
+        results: restaurants,
+        totalPages: Math.ceil(restaurants.length / 3),
+        totalResults: restaurants.length,
+      });
+    });
+
+    it('음식점 불러오기 실패', async () => {
+      restaurantRepository.findAndCount.mockRejectedValue(new Error(':)'));
+
+      const result = await service.allRestaurants({ page: 1 });
+
+      expect(result).toEqual({
+        ok: false,
+        error: '음식점을 불러올 수 없습니다.',
+      });
+    });
+  });
+
+  describe('Get My Restaurants', () => {
+    const myRestaurants = [
+      {
+        id: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        name: 'testMyRestaurants',
+        coverImage: null,
+        address: 'testMyAddress',
+        isPromoted: false,
+        promotedUntil: null,
+        category: [],
+        owner: [],
+        ownerId: 15,
+      },
+    ];
+    it('내 음식점 불러오기 성공', async () => {
+      restaurantRepository.find.mockResolvedValue(myRestaurants);
+
+      const result = await service.myRestaurants(restaurantUser);
+
+      expect(result).toEqual({
+        ok: true,
+        restaurants: myRestaurants,
+      });
+    });
+    it('내 음식점 불러오기 실패', async () => {
+      restaurantRepository.find.mockRejectedValue(new Error(':)'));
+
+      const result = await service.myRestaurants(restaurantUser);
+
+      expect(result).toEqual({
+        ok: false,
+        error: '음식점을 찾을 수 없습니다.',
       });
     });
   });

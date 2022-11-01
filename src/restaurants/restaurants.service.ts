@@ -221,6 +221,7 @@ export class RestaurantService {
           isPromoted: 'DESC',
         },
       });
+
       return {
         ok: true,
         results: restaurants,
@@ -230,7 +231,7 @@ export class RestaurantService {
     } catch (e) {
       return {
         ok: false,
-        error: 'Could not load restaurants',
+        error: '음식점을 불러올 수 없습니다.',
       };
     }
   }
@@ -251,7 +252,7 @@ export class RestaurantService {
     } catch {
       return {
         ok: false,
-        error: 'Could not find restaurants.',
+        error: '음식점을 찾을 수 없습니다.',
       };
     }
   }
