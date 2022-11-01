@@ -123,13 +123,13 @@ export class RestaurantService {
       if (!restaurant) {
         return {
           ok: false,
-          error: 'Restaurant not found',
+          error: '음식점을 찾을 수 없습니다.',
         };
       }
       if (owner.id !== restaurant.ownerId) {
         return {
           ok: false,
-          error: "You can't delete a restaurant that you don't own",
+          error: '음식점 주인이 아니므로 삭제할 수 없습니다.',
         };
       }
       await this.restaurants.delete(restaurantId);
@@ -139,7 +139,7 @@ export class RestaurantService {
     } catch (e) {
       return {
         ok: false,
-        error: 'Could not delete restaurant',
+        error: '음식점을 삭제 할 수 없습니다.',
       };
     }
   }
@@ -154,7 +154,7 @@ export class RestaurantService {
     } catch (e) {
       return {
         ok: false,
-        error: 'Could not load categories',
+        error: '카테고리를 못 가져왔습니다.',
       };
     }
   }
@@ -178,10 +178,11 @@ export class RestaurantService {
         where: { slug },
         relations: ['restaurants'],
       });
+
       if (!category) {
         return {
           ok: false,
-          error: ' Category not found',
+          error: '카테고리를 찾을 수 없습니다.',
         };
       }
       const restaurants = await this.restaurants.find({
@@ -206,7 +207,7 @@ export class RestaurantService {
     } catch (e) {
       return {
         ok: false,
-        error: 'Could not load category',
+        error: '카테고리를 가져올 수 없습니다.',
       };
     }
   }

@@ -12,6 +12,8 @@ const mockRepository = () => ({
   save: jest.fn(),
   create: jest.fn(),
   delete: jest.fn(),
+  count: jest.fn(),
+  find: jest.fn(),
 });
 
 const restaurantUser = {
@@ -120,7 +122,7 @@ describe('Restaurants Service', () => {
     });
   });
 
-  describe('Edit restaurant', () => {
+  describe('Edit Restaurant', () => {
     const categoryArgs = {
       id: 1,
       createdAt: new Date(),
@@ -206,6 +208,164 @@ describe('Restaurants Service', () => {
 
       expect(result).toEqual({
         ok: false,
+      });
+    });
+  });
+
+  describe('Delete Restaurant', () => {
+    const testId = { restaurantId: 1 };
+    it('음식점이 존재하지 않을때', async () => {
+      restaurantRepository.findOne.mockResolvedValue(null);
+      const result = await service.deleteRestaurant(restaurantUser, testId);
+
+      expect(result).toEqual({
+        ok: false,
+        error: '음식점을 찾을 수 없습니다.',
+      });
+    });
+
+    it('음식점 주인이 아닐때', async () => {
+      restaurantRepository.findOne.mockResolvedValue({ ownerId: 2 });
+      const result = await service.deleteRestaurant(restaurantUser, testId);
+
+      expect(result).toEqual({
+        ok: false,
+        error: '음식점 주인이 아니므로 삭제할 수 없습니다.',
+      });
+    });
+
+    it('음식점 삭제 성공', async () => {
+      restaurantRepository.findOne.mockResolvedValue({ ownerId: 1 });
+      const result = await service.deleteRestaurant(restaurantUser, testId);
+
+      expect(restaurantRepository.delete).toHaveBeenCalledTimes(1);
+      expect(result).toEqual({
+        ok: true,
+      });
+    });
+
+    it('음식점 삭제 실패', async () => {
+      restaurantRepository.findOne.mockRejectedValue(new Error(':)'));
+      const result = await service.deleteRestaurant(restaurantUser, testId);
+      expect(result).toEqual({
+        ok: false,
+        error: '음식점을 삭제 할 수 없습니다.',
+      });
+    });
+  });
+
+  describe('Get All Categories & Categories Count', () => {
+    const categories = [
+      {
+        id: 1,
+        name: 'category1',
+        coverImage: null,
+        slug: 'category1',
+        restaurants: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+      {
+        id: 2,
+        name: 'category2',
+        coverImage: null,
+        slug: 'category2',
+        restaurants: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      },
+    ];
+
+    it('Get Categories Success', async () => {
+      jest.spyOn(categoryRepository, 'find').mockResolvedValue(categories);
+      const result = await service.allCategories();
+
+      expect(result).toEqual({
+        ok: true,
+        categories,
+      });
+    });
+
+    it('Get Categories Failed', async () => {
+      jest.spyOn(categoryRepository, 'find').mockRejectedValue(new Error(':)'));
+      const result = await service.allCategories();
+      expect(result).toEqual({
+        ok: false,
+        error: '카테고리를 못 가져왔습니다.',
+      });
+    });
+
+    it('Categories Count', async () => {
+      restaurantRepository.count.mockResolvedValue({ totalResults: 1 });
+      const result = await service.countRestaurants(categories[0]);
+
+      expect(result).toEqual({ totalResults: 1 });
+    });
+  });
+
+  describe('Find Category By Slug', () => {
+    const categoryTestInput = {
+      slug: 'category',
+      page: 1,
+    };
+    const categoryArgs = {
+      id: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      name: 'testName',
+      coverImage: null,
+      slug: 'testSlug',
+      restaurants: [],
+    };
+    const restaurantsArgs = [
+      {
+        id: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        name: 'testRestaurantName',
+        coverImage: null,
+        address: '강남',
+        isPromoted: false,
+        promotedUntil: null,
+      },
+    ];
+
+    it('카테고리를 찾을 수 없을때', async () => {
+      jest.spyOn(categoryRepository, 'findOne').mockResolvedValue(null);
+      const result = await service.findCategoryBySlug(categoryTestInput);
+
+      expect(result).toEqual({
+        ok: false,
+        error: '카테고리를 찾을 수 없습니다.',
+      });
+    });
+
+    it('카테고리 검색 성공', async () => {
+      jest.spyOn(categoryRepository, 'findOne').mockResolvedValue(categoryArgs);
+      restaurantRepository.count.mockResolvedValue(restaurantsArgs.length);
+      restaurantRepository.find.mockResolvedValue(restaurantsArgs);
+
+      const result = await service.findCategoryBySlug(categoryTestInput);
+
+      expect(result).toEqual({
+        ok: true,
+        category: categoryArgs,
+        restaurants: restaurantsArgs,
+        totalPages: Math.ceil(restaurantsArgs.length / 25),
+        totalResults: restaurantsArgs.length,
+      });
+    });
+
+    it('카테고리 검색 실패', async () => {
+      jest
+        .spyOn(categoryRepository, 'findOne')
+        .mockRejectedValue(new Error(':)'));
+
+      const result = await service.findCategoryBySlug(categoryTestInput);
+
+      expect(result).toEqual({
+        ok: false,
+        error: '카테고리를 가져올 수 없습니다.',
       });
     });
   });
