@@ -279,7 +279,7 @@ export class RestaurantService {
     } catch {
       return {
         ok: false,
-        error: 'Could not find restaurants.',
+        error: '음식점을 찾을 수 없습니다.',
       };
     }
   }
@@ -295,7 +295,7 @@ export class RestaurantService {
       if (!restaurant) {
         return {
           ok: false,
-          error: 'Restaurant not found',
+          error: '찾는 음식점이 없습니다.',
         };
       }
       return {
@@ -305,7 +305,7 @@ export class RestaurantService {
     } catch (e) {
       return {
         ok: false,
-        error: 'Could not find restaurant',
+        error: '음식점을 찾을 수 없습니다.',
       };
     }
   }
