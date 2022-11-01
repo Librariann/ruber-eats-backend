@@ -331,7 +331,7 @@ export class RestaurantService {
     } catch {
       return {
         ok: false,
-        error: 'Could not search for restaurant',
+        error: '음식점을 검색 할 수 없습니다.',
       };
     }
   }

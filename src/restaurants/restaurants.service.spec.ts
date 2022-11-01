@@ -33,6 +33,22 @@ const restaurantUser = {
   checkPassword: null,
 };
 
+const restaurants = [
+  {
+    id: 1,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    name: 'testRestaurants',
+    coverImage: null,
+    address: 'testAddress',
+    isPromoted: false,
+    promotedUntil: null,
+    category: [],
+    owner: [],
+    ownerId: 1,
+  },
+];
+
 type MockRepository<T = any> = Partial<Record<keyof Repository<T>, jest.Mock>>;
 
 describe('Restaurants Service', () => {
@@ -372,22 +388,6 @@ describe('Restaurants Service', () => {
   });
 
   describe('Get All Restaurants', () => {
-    const restaurants = [
-      {
-        id: 1,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        name: 'testRestaurants',
-        coverImage: null,
-        address: 'testAddress',
-        isPromoted: false,
-        promotedUntil: null,
-        category: [],
-        owner: [],
-        ownerId: 1,
-      },
-    ];
-
     it('모든 음식점 검색 성공', async () => {
       restaurantRepository.findAndCount.mockResolvedValue([
         [...restaurants],
@@ -545,6 +545,41 @@ describe('Restaurants Service', () => {
       expect(result).toEqual({
         ok: false,
         error: '음식점을 찾을 수 없습니다.',
+      });
+    });
+  });
+
+  describe('Search Restaurant By Name', () => {
+    it('음식점 이름으로 검색 성공', async () => {
+      restaurantRepository.findAndCount.mockResolvedValue([
+        [...restaurants],
+        restaurants.length,
+      ]);
+
+      const result = await service.searchRestaurantByName({
+        query: 'rest',
+        page: 1,
+      });
+
+      expect(result).toEqual({
+        ok: true,
+        restaurants,
+        totalResults: restaurants.length,
+        totalPages: Math.ceil(restaurants.length / 25),
+      });
+    });
+
+    it('음식점 이름으로 검색 실패', async () => {
+      restaurantRepository.findAndCount.mockRejectedValue(new Error(':)'));
+
+      const result = await service.searchRestaurantByName({
+        query: 'rest',
+        page: 1,
+      });
+
+      expect(result).toEqual({
+        ok: false,
+        error: '음식점을 검색 할 수 없습니다.',
       });
     });
   });
