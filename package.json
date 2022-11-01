@@ -97,7 +97,8 @@
     "coveragePathIgnorePatterns": [
       "node_modules",
       ".entity.ts",
-      ".constants.ts"
+      ".constants.ts",
+      "payments."
     ]
   }
 }

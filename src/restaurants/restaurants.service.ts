@@ -53,10 +53,8 @@ export class RestaurantService {
       const category = await this.categories.getOrCreate(
         createRestaurantInput.categoryName,
       );
-      // const category = await this.categories.getOrCreate(
-      //   createRestaurantInput.categoryName,
-      // );
       newRestaurant.category = category;
+
       await this.restaurants.save(newRestaurant);
       return {
         ok: true,
@@ -66,7 +64,7 @@ export class RestaurantService {
       console.log(e);
       return {
         ok: false,
-        error: '레스토랑을 생성할 수 없습니다',
+        error: '음식점을 생성할 수 없습니다',
       };
     }
   }
@@ -82,13 +80,13 @@ export class RestaurantService {
       if (!restaurant) {
         return {
           ok: false,
-          error: 'Restaurant not found',
+          error: '음식점을 찾을 수 없습니다.',
         };
       }
       if (owner.id !== restaurant.ownerId) {
         return {
           ok: false,
-          error: "You can't edit a restaurant that you don't own",
+          error: '음식점 주인이 아니므로 수정할 수 없습니다.',
         };
       }
       let category: Category = null;

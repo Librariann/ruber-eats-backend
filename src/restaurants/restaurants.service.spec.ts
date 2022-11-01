@@ -1,0 +1,212 @@
+import { Test } from '@nestjs/testing';
+import { getRepositoryToken } from '@nestjs/typeorm';
+import { RestaurantService } from './restaurants.service';
+import { Restaurant } from './entities/restaurant.entity';
+import { Dish } from './entities/dish.entity';
+import { CategoryRepository } from './repositories/category.repository';
+import { Repository } from 'typeorm';
+import { UserRole } from 'src/users/entities/user.entity';
+
+const mockRepository = () => ({
+  findOne: jest.fn(),
+  save: jest.fn(),
+  create: jest.fn(),
+  delete: jest.fn(),
+});
+
+const restaurantUser = {
+  id: 1,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  email: 'test@test.com',
+  password: 'test',
+  role: UserRole.Owner,
+  verified: false,
+  restaurants: [],
+  orders: [],
+  payments: [],
+  rides: [],
+  hashPassword: null,
+  checkPassword: null,
+};
+
+type MockRepository<T = any> = Partial<Record<keyof Repository<T>, jest.Mock>>;
+
+describe('Restaurants Service', () => {
+  let service: RestaurantService;
+  let categoryRepository: CategoryRepository;
+  let restaurantRepository: MockRepository<Restaurant>;
+
+  beforeEach(async () => {
+    const module = await Test.createTestingModule({
+      providers: [
+        RestaurantService,
+        CategoryRepository,
+        {
+          provide: getRepositoryToken(Restaurant),
+          useValue: mockRepository(),
+        },
+        {
+          provide: getRepositoryToken(Dish),
+          useValue: mockRepository(),
+        },
+      ],
+    }).compile();
+    service = module.get<RestaurantService>(RestaurantService);
+    categoryRepository = module.get<CategoryRepository>(CategoryRepository);
+    restaurantRepository = module.get(getRepositoryToken(Restaurant));
+  });
+
+  it('Should be defiend', () => {
+    expect(service).toBeDefined();
+  });
+
+  describe('Create Restaurant', () => {
+    const createRestaurantInputArgs = {
+      id: 1,
+      name: 'test',
+      coverImage: 'test',
+      address: 'test',
+      categoryName: 'test',
+    };
+    const categoryArgs = {
+      id: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      name: 'testrestaurant',
+      coverImage: null,
+      slug: 'testrestaurant',
+      restaurants: [],
+    };
+
+    it('새로운 음식점 등록 성공', async () => {
+      restaurantRepository.create.mockReturnValue(createRestaurantInputArgs);
+      jest
+        .spyOn(categoryRepository, 'getOrCreate')
+        .mockResolvedValue(categoryArgs);
+
+      const result = await service.createRestaurant(
+        restaurantUser,
+        createRestaurantInputArgs,
+      );
+
+      expect(restaurantRepository.save).toHaveBeenCalledTimes(1);
+      expect(restaurantRepository.save).toHaveBeenCalledWith(
+        expect.any(Object),
+      );
+
+      expect(categoryRepository.getOrCreate).toHaveBeenCalledTimes(1);
+      expect(restaurantRepository.save).toHaveBeenCalledWith(
+        expect.any(Object),
+      );
+
+      expect(result).toEqual({
+        ok: true,
+        restaurantId: 1,
+      });
+    });
+
+    it('새로운 음식점 등록 실패', async () => {
+      restaurantRepository.create.mockResolvedValue(undefined);
+      const result = await service.createRestaurant(
+        restaurantUser,
+        createRestaurantInputArgs,
+      );
+
+      expect(result).toEqual({
+        ok: false,
+        error: '음식점을 생성할 수 없습니다',
+      });
+    });
+  });
+
+  describe('Edit restaurant', () => {
+    const categoryArgs = {
+      id: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      name: 'testrestaurant',
+      coverImage: null,
+      slug: 'testrestaurant',
+      restaurants: [],
+    };
+    const editRestaurantInputArgs = {
+      id: 1,
+      name: 'test',
+      coverImage: 'test',
+      address: 'test',
+      categoryName: 'test',
+      restaurantId: 1,
+    };
+
+    it('음식점이 존재하지 않을때', async () => {
+      restaurantRepository.findOne.mockResolvedValue(null);
+      const result = await service.editRestaurant(
+        restaurantUser,
+        editRestaurantInputArgs,
+      );
+
+      expect(result).toEqual({
+        ok: false,
+        error: '음식점을 찾을 수 없습니다.',
+      });
+    });
+
+    it('음식점 주인이 아닐때', async () => {
+      restaurantRepository.findOne.mockResolvedValue({ ownerId: 2 });
+      const result = await service.editRestaurant(
+        restaurantUser,
+        editRestaurantInputArgs,
+      );
+
+      expect(result).toEqual({
+        ok: false,
+        error: '음식점 주인이 아니므로 수정할 수 없습니다.',
+      });
+    });
+
+    it('음식점 정보 변경 성공', async () => {
+      const oldRestaurant = {
+        ownerId: 1,
+        restaurantId: 1,
+        name: 'oldTest',
+        coverImage: null,
+        address: 'oldTestAddress',
+        categoryName: 'oldTestCategoryName',
+      };
+
+      restaurantRepository.findOne.mockResolvedValue(oldRestaurant);
+
+      jest
+        .spyOn(categoryRepository, 'getOrCreate')
+        .mockResolvedValue(categoryArgs);
+
+      const result = await service.editRestaurant(
+        restaurantUser,
+        editRestaurantInputArgs,
+      );
+
+      expect(categoryRepository.getOrCreate).toHaveBeenCalledTimes(1);
+
+      expect(restaurantRepository.save).toHaveBeenCalledTimes(1);
+      expect(restaurantRepository.save).toHaveBeenCalledWith(
+        expect.any(Object),
+      );
+
+      expect(result).toEqual({ ok: true });
+    });
+
+    it('음식점 정보 변경 실패', async () => {
+      restaurantRepository.findOne.mockRejectedValue(new Error(':)'));
+
+      const result = await service.editRestaurant(
+        restaurantUser,
+        editRestaurantInputArgs,
+      );
+
+      expect(result).toEqual({
+        ok: false,
+      });
+    });
+  });
+});
