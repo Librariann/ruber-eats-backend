@@ -44,7 +44,7 @@ export class OrderService {
       if (!restaurant) {
         return {
           ok: false,
-          error: 'Restaurant not found',
+          error: '음식점이 존재하지 않습니다.',
         };
       }
 
@@ -60,7 +60,7 @@ export class OrderService {
         if (!dish) {
           return {
             ok: false,
-            error: 'Dish not found',
+            error: '음식이 존재하지 않습니다.',
           };
         }
 
@@ -73,12 +73,13 @@ export class OrderService {
             if (dishOption.extra) {
               dishFinalPrice += dishOption.extra;
             } else {
+              //TODO: jest to testing
               const dishOptionChoice = dishOption.choices?.find(
                 (optionChoice) => optionChoice.name === itemOption.choice,
               );
               if (dishOptionChoice) {
                 if (dishOptionChoice.extra) {
-                  dishFinalPrice += dishOption.extra;
+                  dishFinalPrice += dishOptionChoice.extra;
                 }
               }
             }
@@ -104,18 +105,20 @@ export class OrderService {
       );
 
       console.log(order);
+
+      //TODO: jest to testing
       await this.pubSub.publish(NEW_PENDING_ORDER, {
         pendingOrders: { order, ownerId: restaurant.ownerId },
       });
-      console.log(order.id);
+
       return {
         ok: true,
         orderId: order.id,
       };
-    } catch {
+    } catch (e) {
       return {
         ok: false,
-        error: 'Could not create order',
+        error: '주문에 실패 했습니다',
       };
     }
   }

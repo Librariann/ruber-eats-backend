@@ -6,9 +6,14 @@ import { Restaurant } from 'src/restaurants/entities/restaurant.entity';
 import { OrderItem } from './entities/order-item.entity';
 import { Order } from './entities/order.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
-import { PUB_SUB } from 'src/common/common.constants';
 import { User, UserRole } from 'src/users/entities/user.entity';
 import { PubSub } from 'graphql-subscriptions';
+import {
+  NEW_COOKED_ORDER,
+  NEW_ORDER_UPDATE,
+  NEW_PENDING_ORDER,
+  PUB_SUB,
+} from 'src/common/common.constants';
 
 const mockRepository = () => ({
   findOne: jest.fn(),
@@ -17,7 +22,27 @@ const mockRepository = () => ({
   delete: jest.fn(),
 });
 
+const createOrderUser = {
+  id: 1,
+  createdAt: new Date(),
+  updatedAt: new Date(),
+  email: 'test@test.com',
+  password: 'test',
+  role: UserRole.Client,
+  verified: false,
+  restaurants: [],
+  orders: [],
+  payments: [],
+  rides: [],
+  hashPassword: null,
+  checkPassword: null,
+};
+
 type MockRepository<T = any> = Partial<Record<keyof Repository<T>, jest.Mock>>;
+
+const pubSubService = () => ({
+  publish: jest.fn(),
+});
 
 describe('OrderService', () => {
   let service: OrderService;
@@ -25,7 +50,6 @@ describe('OrderService', () => {
   let orderItemRepository: MockRepository<OrderItem>;
   let restaurantRepository: MockRepository<Restaurant>;
   let dishRepository: MockRepository<Dish>;
-  let pubSub: PubSub;
 
   beforeEach(async () => {
     const module = await Test.createTestingModule({
@@ -49,7 +73,7 @@ describe('OrderService', () => {
         },
         {
           provide: PUB_SUB,
-          useValue: mockRepository(),
+          useValue: pubSubService(),
         },
       ],
     }).compile();
@@ -58,7 +82,6 @@ describe('OrderService', () => {
     orderItemRepository = module.get(getRepositoryToken(OrderItem));
     restaurantRepository = module.get(getRepositoryToken(Restaurant));
     dishRepository = module.get(getRepositoryToken(Dish));
-    pubSub = module.get(PubSub);
   });
 
   it('should be defined', () => {
@@ -66,79 +89,112 @@ describe('OrderService', () => {
   });
 
   describe('Create Order', () => {
+    const optionsArray = [
+      { name: 'testOptions', extra: 7 },
+      { name: 'testOptions2', extra: 8 },
+    ];
+
     const createOrderArgs = {
-      user: {
-        id: 1,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-        email: 'test@test.com',
-        password: 'test',
-        role: UserRole.Client,
-        verified: false,
-        restaurants: [],
-        orders: [],
-        payments: [],
-        rides: [],
-        hashPassword: null,
-        checkPassword: null,
-      },
-      input: {
-        restaurantId: 1,
-        items: [
-          {
-            dishId: 1,
-            options: [{ name: 'testOptions', extra: 7 }],
-          },
-        ],
-      },
+      restaurantId: 1,
+      items: [
+        {
+          dishId: 1,
+          options: optionsArray,
+        },
+      ],
     };
 
-    const dishArgs = {
+    const dish = {
       id: 1,
       name: 'testDish',
       price: 5,
-      options: [{ name: 'testOptions', extra: 7 }],
+      options: optionsArray,
     };
 
-    const newOrderItem = [
-      {
-        name: 'test',
-        choice: 'test',
-        extra: 4,
-      },
-    ];
-
-    it('Restaurant not found', async () => {
+    it('음식점이 존재하지 않을 때', async () => {
       restaurantRepository.findOne.mockResolvedValue(undefined);
 
       const result = await service.createOrder(
-        createOrderArgs.user,
-        createOrderArgs.input,
+        createOrderUser,
+        createOrderArgs,
       );
 
       expect(result).toMatchObject({
         ok: false,
-        error: 'Restaurant not found',
+        error: '음식점이 존재하지 않습니다.',
       });
     });
 
-    it('Dish not found', async () => {
+    it('음식이 존재하지 않습니다.', async () => {
       restaurantRepository.findOne.mockResolvedValue({ id: 1 });
-      dishRepository.findOne.mockResolvedValue(undefined);
+      dishRepository.findOne.mockResolvedValue(null);
 
       const result = await service.createOrder(
-        createOrderArgs.user,
-        createOrderArgs.input,
+        createOrderUser,
+        createOrderArgs,
       );
 
       expect(result).toMatchObject({
         ok: false,
-        error: 'Dish not found',
+        error: '음식이 존재하지 않습니다.',
       });
     });
 
-    it.todo('Order Sum Price');
-    it.todo('Order Items Save');
-    it.todo('Order Save');
+    it('extra 값이 존재 할 때 주문 성공', async () => {
+      const order = {
+        id: 1,
+        customer: createOrderUser,
+        restaurant: { id: 1 },
+        total:
+          dish.price +
+          optionsArray
+            .map((item) => item.extra)
+            .reduce((prev, curr) => prev + curr),
+      };
+
+      restaurantRepository.findOne.mockResolvedValue({ id: 1 });
+      dishRepository.findOne.mockResolvedValue(dish);
+      orderItemRepository.create.mockReturnValue(dish);
+      orderItemRepository.save.mockResolvedValue(dish);
+      orderRepository.create.mockReturnValue(order);
+      orderRepository.save.mockResolvedValue(order);
+
+      const result = await service.createOrder(
+        createOrderUser,
+        createOrderArgs,
+      );
+
+      expect(orderItemRepository.create).toHaveBeenCalledTimes(1);
+      expect(orderItemRepository.create).toHaveBeenCalledWith(
+        expect.any(Object),
+      );
+
+      expect(orderItemRepository.save).toHaveBeenCalledTimes(1);
+      expect(orderItemRepository.save).toHaveBeenCalledWith(expect.any(Object));
+
+      expect(orderRepository.create).toHaveBeenCalledTimes(1);
+      expect(orderRepository.create).toHaveBeenCalledWith(expect.any(Object));
+
+      expect(orderRepository.save).toHaveBeenCalledTimes(1);
+      expect(orderRepository.save).toHaveBeenCalledWith(expect.any(Object));
+
+      expect(result).toEqual({
+        ok: true,
+        orderId: order.id,
+      });
+    });
+
+    it('주문 실패', async () => {
+      restaurantRepository.findOne.mockRejectedValue(new Error(':)'));
+      const result = await service.createOrder(
+        createOrderUser,
+        createOrderArgs,
+      );
+
+      expect(result).toEqual({
+        ok: false,
+        error: '주문에 실패 했습니다',
+      });
+    });
   });
 });
