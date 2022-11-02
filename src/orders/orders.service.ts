@@ -104,8 +104,6 @@ export class OrderService {
         }),
       );
 
-      console.log(order);
-
       //TODO: jest to testing
       await this.pubSub.publish(NEW_PENDING_ORDER, {
         pendingOrders: { order, ownerId: restaurant.ownerId },
@@ -163,7 +161,7 @@ export class OrderService {
     } catch {
       return {
         ok: false,
-        error: 'Could not get orders',
+        error: '주문목록을 가져 올 수 없습니다.',
       };
     }
   }
@@ -191,13 +189,13 @@ export class OrderService {
       if (!order) {
         return {
           ok: false,
-          error: 'Order not found',
+          error: '주문이 없습니다 다시한번 확인해주세요',
         };
       }
       if (!this.canAllowedOrder(user, order)) {
         return {
           ok: false,
-          error: "You can't see that",
+          error: '권한을 확인해주세요',
         };
       }
       return {
@@ -207,7 +205,7 @@ export class OrderService {
     } catch {
       return {
         ok: false,
-        error: 'Could not load order',
+        error: '주문 검색 실패',
       };
     }
   }

@@ -4,7 +4,7 @@ import { OrderService } from './orders.service';
 import { Dish } from 'src/restaurants/entities/dish.entity';
 import { Restaurant } from 'src/restaurants/entities/restaurant.entity';
 import { OrderItem } from './entities/order-item.entity';
-import { Order } from './entities/order.entity';
+import { Order, OrderStatus } from './entities/order.entity';
 import { getRepositoryToken } from '@nestjs/typeorm';
 import { User, UserRole } from 'src/users/entities/user.entity';
 import { PubSub } from 'graphql-subscriptions';
@@ -20,6 +20,7 @@ const mockRepository = () => ({
   save: jest.fn(),
   create: jest.fn(),
   delete: jest.fn(),
+  find: jest.fn(),
 });
 
 const createOrderUser = {
@@ -36,6 +37,38 @@ const createOrderUser = {
   rides: [],
   hashPassword: null,
   checkPassword: null,
+};
+
+const order = {
+  customerId: 2,
+  driverId: 2,
+  restaurant: {
+    id: 1,
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    ownerId: 2,
+    name: 'testName',
+    coverImage: null,
+    address: 'testAddress',
+    category: {
+      id: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      name: 'testCategoryName',
+      coverImage: null,
+      slug: 'test',
+      restaurants: [],
+    },
+    owner: createOrderUser,
+    orders: [],
+    menu: [],
+    isPromoted: false,
+  },
+  items: [],
+  status: OrderStatus.Pending,
+  id: 1,
+  createdAt: new Date(),
+  updatedAt: new Date(),
 };
 
 type MockRepository<T = any> = Partial<Record<keyof Repository<T>, jest.Mock>>;
@@ -140,7 +173,7 @@ describe('OrderService', () => {
       });
     });
 
-    it('extra 값이 존재 할 때 주문 성공', async () => {
+    it('주문 성공', async () => {
       const order = {
         id: 1,
         customer: createOrderUser,
@@ -194,6 +227,301 @@ describe('OrderService', () => {
       expect(result).toEqual({
         ok: false,
         error: '주문에 실패 했습니다',
+      });
+    });
+  });
+
+  describe('Get Orders', () => {
+    it('손님일때 주문목록 가져오기', async () => {
+      const getOrdersUser = {
+        id: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        email: 'test@test.com',
+        password: 'test',
+        role: UserRole.Client,
+        verified: false,
+        restaurants: [],
+        orders: [],
+        payments: [],
+        rides: [],
+        hashPassword: null,
+        checkPassword: null,
+      };
+
+      const getOrdersArgs = [
+        {
+          id: 1,
+        },
+        {
+          id: 2,
+        },
+      ];
+
+      orderRepository.find.mockResolvedValue(getOrdersArgs);
+
+      const result = await service.getOrders(getOrdersUser, {
+        status: OrderStatus.Pending,
+      });
+
+      expect(result).toEqual({
+        ok: true,
+        orders: getOrdersArgs,
+      });
+    });
+
+    it('배달기사 일때 주문목록 가져오기', async () => {
+      const getOrdersUser = {
+        id: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        email: 'test@test.com',
+        password: 'test',
+        role: UserRole.Delivery,
+        verified: false,
+        restaurants: [],
+        orders: [],
+        payments: [],
+        rides: [],
+        hashPassword: null,
+        checkPassword: null,
+      };
+
+      const getOrdersArgs = [
+        {
+          id: 1,
+        },
+        {
+          id: 2,
+        },
+      ];
+
+      orderRepository.find.mockResolvedValue(getOrdersArgs);
+
+      const result = await service.getOrders(getOrdersUser, {
+        status: OrderStatus.Pending,
+      });
+
+      expect(result).toEqual({
+        ok: true,
+        orders: getOrdersArgs,
+      });
+    });
+
+    it('가게주인 일때 주문목록 가져오기', async () => {
+      const getOrdersUser = {
+        id: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        email: 'test@test.com',
+        password: 'test',
+        role: UserRole.Owner,
+        verified: false,
+        restaurants: [],
+        orders: [],
+        payments: [],
+        rides: [],
+        hashPassword: null,
+        checkPassword: null,
+      };
+
+      const getOrdersArgs = [
+        {
+          id: 1,
+          orders: [
+            { id: 1, status: OrderStatus.Pending },
+            { id: 2, status: OrderStatus.Pending },
+          ],
+        },
+        {
+          id: 2,
+          orders: [
+            { id: 3, status: OrderStatus.Pending },
+            { id: 4, status: OrderStatus.Pending },
+          ],
+        },
+      ];
+
+      restaurantRepository.find.mockResolvedValue(getOrdersArgs);
+
+      const result = await service.getOrders(getOrdersUser, {
+        status: OrderStatus.Pending,
+      });
+
+      expect(result).toEqual({
+        ok: true,
+        orders: getOrdersArgs.map((restaurant) => restaurant.orders).flat(1),
+      });
+    });
+
+    it('주문목록 가져오기 실패', async () => {
+      const getOrdersUser = {
+        id: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        email: 'test@test.com',
+        password: 'test',
+        role: UserRole.Client,
+        verified: false,
+        restaurants: [],
+        orders: [],
+        payments: [],
+        rides: [],
+        hashPassword: null,
+        checkPassword: null,
+      };
+
+      orderRepository.find.mockRejectedValue(new Error(':)'));
+
+      const result = await service.getOrders(getOrdersUser, {
+        status: OrderStatus.Pending,
+      });
+
+      expect(result).toEqual({
+        ok: false,
+        error: '주문목록을 가져 올 수 없습니다.',
+      });
+    });
+  });
+
+  describe('Can Allowed Order', () => {
+    it('유저가 고객일 때', () => {
+      const user = {
+        id: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        email: 'test@test.com',
+        password: 'test',
+        role: UserRole.Client,
+        verified: false,
+        restaurants: [],
+        orders: [],
+        payments: [],
+        rides: [],
+        hashPassword: null,
+        checkPassword: null,
+      };
+
+      const result = service.canAllowedOrder(user, order);
+      expect(result).toBeFalsy();
+    });
+
+    it('유저가 배달기사일 때', () => {
+      const user = {
+        id: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        email: 'test@test.com',
+        password: 'test',
+        role: UserRole.Delivery,
+        verified: false,
+        restaurants: [],
+        orders: [],
+        payments: [],
+        rides: [],
+        hashPassword: null,
+        checkPassword: null,
+      };
+
+      const result = service.canAllowedOrder(user, order);
+      expect(result).toBeFalsy();
+    });
+
+    it('유저가 고객일 때', () => {
+      const user = {
+        id: 1,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        email: 'test@test.com',
+        password: 'test',
+        role: UserRole.Owner,
+        verified: false,
+        restaurants: [],
+        orders: [],
+        payments: [],
+        rides: [],
+        hashPassword: null,
+        checkPassword: null,
+      };
+
+      const result = service.canAllowedOrder(user, order);
+      expect(result).toBeFalsy();
+    });
+  });
+
+  describe('Get Order', () => {
+    const user = {
+      id: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      email: 'test@test.com',
+      password: 'test',
+      role: UserRole.Client,
+      verified: false,
+      restaurants: [],
+      orders: [],
+      payments: [],
+      rides: [],
+      hashPassword: null,
+      checkPassword: null,
+    };
+
+    it('주문 검색시 데이터 없음', async () => {
+      orderRepository.findOne.mockResolvedValue(null);
+
+      const result = await service.getOrder(user, { id: 1 });
+
+      expect(result).toEqual({
+        ok: false,
+        error: '주문이 없습니다 다시한번 확인해주세요',
+      });
+    });
+
+    it('권한 확인', async () => {
+      orderRepository.findOne.mockResolvedValue(order);
+
+      const result = await service.getOrder(user, { id: 1 });
+
+      expect(result).toEqual({
+        ok: false,
+        error: '권한을 확인해주세요',
+      });
+    });
+
+    it('주문 검색 성공', async () => {
+      const orderSearchSuccessUser = {
+        id: 2,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        email: 'test@test.com',
+        password: 'test',
+        role: UserRole.Client,
+        verified: false,
+        restaurants: [],
+        orders: [],
+        payments: [],
+        rides: [],
+        hashPassword: null,
+        checkPassword: null,
+      };
+      orderRepository.findOne.mockResolvedValue(order);
+
+      const result = await service.getOrder(orderSearchSuccessUser, { id: 1 });
+
+      expect(result).toEqual({
+        ok: true,
+        order,
+      });
+    });
+
+    it('주문 검색 실패', async () => {
+      orderRepository.findOne.mockRejectedValue(new Error(':('));
+
+      const result = await service.getOrder(user, { id: 1 });
+
+      expect(result).toEqual({
+        ok: false,
+        error: '주문 검색 실패',
       });
     });
   });
