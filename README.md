@@ -12,9 +12,11 @@
 
 #### 프론트엔드
 
-![frontend](https://user-images.githubusercontent.com/30823551/198270186-9a237fb6-ff41-4f96-bd64-8ad691898e2d.jpg)
+![frontend](https://user-images.githubusercontent.com/30823551/199406852-55f7b0ce-b61d-44fc-89ce-bd9a6e6a3ee1.jpg)
 
 #### 백엔드
+
+![backend](https://user-images.githubusercontent.com/30823551/199406844-dae82ec3-8e12-453e-a394-0bcd8dfb1c2e.jpg)
 
 #### 인프라
 
