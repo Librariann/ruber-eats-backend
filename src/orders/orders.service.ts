@@ -189,7 +189,7 @@ export class OrderService {
       if (!order) {
         return {
           ok: false,
-          error: '주문이 없습니다 다시한번 확인해주세요',
+          error: '주문을 찾을수 없습니다 다시한번 확인해주세요',
         };
       }
       if (!this.canAllowedOrder(user, order)) {
@@ -221,13 +221,13 @@ export class OrderService {
       if (!order) {
         return {
           ok: false,
-          error: 'Order not found',
+          error: '주문을 찾을수 없습니다 다시한번 확인해주세요',
         };
       }
       if (!this.canAllowedOrder(user, order)) {
         return {
           ok: false,
-          error: "You can't see this",
+          error: '권한을 확인해주세요',
         };
       }
 
@@ -251,7 +251,7 @@ export class OrderService {
       if (!canEdit) {
         return {
           ok: false,
-          error: "You can't do that.",
+          error: '수정 할 수 없습니다 권한을 확인해주세요',
         };
       }
       await this.orders.save({
@@ -273,7 +273,7 @@ export class OrderService {
     } catch {
       return {
         ok: false,
-        error: 'Could not edit order',
+        error: '주문 상태를 변경 할 수 없습니다.',
       };
     }
   }

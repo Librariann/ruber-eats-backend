@@ -466,14 +466,14 @@ describe('OrderService', () => {
       checkPassword: null,
     };
 
-    it('주문 검색시 데이터 없음', async () => {
+    it('주문을 찾을 수 없음', async () => {
       orderRepository.findOne.mockResolvedValue(null);
 
       const result = await service.getOrder(user, { id: 1 });
 
       expect(result).toEqual({
         ok: false,
-        error: '주문이 없습니다 다시한번 확인해주세요',
+        error: '주문을 찾을수 없습니다 다시한번 확인해주세요',
       });
     });
 
@@ -522,6 +522,187 @@ describe('OrderService', () => {
       expect(result).toEqual({
         ok: false,
         error: '주문 검색 실패',
+      });
+    });
+  });
+
+  describe('Edit Order', () => {
+    const user = {
+      id: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      email: 'test@test.com',
+      password: 'test',
+      role: UserRole.Client,
+      verified: false,
+      restaurants: [],
+      orders: [],
+      payments: [],
+      rides: [],
+      hashPassword: null,
+      checkPassword: null,
+    };
+    it('주문을 찾을 수 없음', async () => {
+      orderRepository.findOne.mockResolvedValue(null);
+
+      const result = await service.editOrder(user, {
+        id: 1,
+        status: OrderStatus.Cooking,
+      });
+
+      expect(result).toEqual({
+        ok: false,
+        error: '주문을 찾을수 없습니다 다시한번 확인해주세요',
+      });
+    });
+
+    it('권한 확인', async () => {
+      orderRepository.findOne.mockResolvedValue(order);
+
+      const result = await service.editOrder(user, {
+        id: 1,
+        status: OrderStatus.Cooking,
+      });
+
+      expect(result).toEqual({
+        ok: false,
+        error: '권한을 확인해주세요',
+      });
+    });
+
+    it('고객 수정 권한 확인', async () => {
+      const orderSearchSuccessUser = {
+        id: 2,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        email: 'test@test.com',
+        password: 'test',
+        role: UserRole.Client,
+        verified: false,
+        restaurants: [],
+        orders: [],
+        payments: [],
+        rides: [],
+        hashPassword: null,
+        checkPassword: null,
+      };
+
+      orderRepository.findOne.mockResolvedValue(order);
+
+      const result = await service.editOrder(orderSearchSuccessUser, {
+        id: 1,
+        status: OrderStatus.Cooking,
+      });
+
+      expect(result).toEqual({
+        ok: false,
+        error: '수정 할 수 없습니다 권한을 확인해주세요',
+      });
+    });
+
+    it('가게주인 수정 권한 확인', async () => {
+      const orderSearchSuccessUser = {
+        id: 2,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        email: 'test@test.com',
+        password: 'test',
+        role: UserRole.Owner,
+        verified: false,
+        restaurants: [],
+        orders: [],
+        payments: [],
+        rides: [],
+        hashPassword: null,
+        checkPassword: null,
+      };
+
+      orderRepository.findOne.mockResolvedValue(order);
+
+      const result = await service.editOrder(orderSearchSuccessUser, {
+        id: 1,
+        status: OrderStatus.Pending,
+      });
+
+      expect(result).toEqual({
+        ok: false,
+        error: '수정 할 수 없습니다 권한을 확인해주세요',
+      });
+    });
+
+    it('배달기사 수정 권한 확인', async () => {
+      const orderSearchSuccessUser = {
+        id: 2,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        email: 'test@test.com',
+        password: 'test',
+        role: UserRole.Delivery,
+        verified: false,
+        restaurants: [],
+        orders: [],
+        payments: [],
+        rides: [],
+        hashPassword: null,
+        checkPassword: null,
+      };
+
+      orderRepository.findOne.mockResolvedValue(order);
+
+      const result = await service.editOrder(orderSearchSuccessUser, {
+        id: 1,
+        status: OrderStatus.Cooked,
+      });
+
+      expect(result).toEqual({
+        ok: false,
+        error: '수정 할 수 없습니다 권한을 확인해주세요',
+      });
+    });
+
+    it('주문 상태 변경 성공', async () => {
+      const orderSearchSuccessUser = {
+        id: 2,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+        email: 'test@test.com',
+        password: 'test',
+        role: UserRole.Owner,
+        verified: false,
+        restaurants: [],
+        orders: [],
+        payments: [],
+        rides: [],
+        hashPassword: null,
+        checkPassword: null,
+      };
+
+      orderRepository.findOne.mockResolvedValue(order);
+
+      const result = await service.editOrder(orderSearchSuccessUser, {
+        id: 1,
+        status: OrderStatus.Cooked,
+      });
+
+      expect(orderRepository.save).toHaveBeenCalledTimes(1);
+      expect(orderRepository.save).toHaveBeenCalledWith(expect.any(Object));
+
+      expect(result).toEqual({
+        ok: true,
+      });
+    });
+
+    it('주문 상태 변경 실패', async () => {
+      orderRepository.findOne.mockRejectedValue(new Error(':('));
+
+      const result = await service.editOrder(user, {
+        id: 1,
+        status: OrderStatus.Cooking,
+      });
+
+      expect(result).toEqual({
+        ok: false,
+        error: '주문 상태를 변경 할 수 없습니다.',
       });
     });
   });
