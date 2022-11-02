@@ -287,14 +287,14 @@ export class OrderService {
       if (!order) {
         return {
           ok: false,
-          error: 'Order not found',
+          error: '주문을 찾을수 없습니다 다시한번 확인해주세요',
         };
       }
 
       if (order.driver) {
         return {
           ok: false,
-          error: 'this order already has a driver',
+          error: '이미 배달기사가 배정 됐습니다',
         };
       }
 
@@ -312,7 +312,7 @@ export class OrderService {
     } catch {
       return {
         ok: false,
-        error: 'Could not update order',
+        error: '주문 상태를 변경 할 수 없습니다.',
       };
     }
   }

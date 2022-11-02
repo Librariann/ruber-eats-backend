@@ -706,4 +706,102 @@ describe('OrderService', () => {
       });
     });
   });
+
+  describe('Take Order', () => {
+    const user = {
+      id: 1,
+      createdAt: new Date(),
+      updatedAt: new Date(),
+      email: 'test@test.com',
+      password: 'test',
+      role: UserRole.Delivery,
+      verified: false,
+      restaurants: [],
+      orders: [],
+      payments: [],
+      rides: [],
+      hashPassword: null,
+      checkPassword: null,
+    };
+
+    it('주문을 찾을 수 없음', async () => {
+      orderRepository.findOne.mockResolvedValue(null);
+
+      const result = await service.takeOrder(user, { id: 1 });
+
+      expect(result).toEqual({
+        ok: false,
+        error: '주문을 찾을수 없습니다 다시한번 확인해주세요',
+      });
+    });
+
+    it('배달기사 이미 배정 됐을 때', async () => {
+      const driverOrder = {
+        customerId: 2,
+        driverId: 2,
+        restaurant: {
+          id: 1,
+          createdAt: new Date(),
+          updatedAt: new Date(),
+          ownerId: 2,
+          name: 'testName',
+          coverImage: null,
+          address: 'testAddress',
+          category: {
+            id: 1,
+            createdAt: new Date(),
+            updatedAt: new Date(),
+            name: 'testCategoryName',
+            coverImage: null,
+            slug: 'test',
+            restaurants: [],
+          },
+          owner: createOrderUser,
+          orders: [],
+          menu: [],
+          isPromoted: false,
+        },
+        items: [],
+        status: OrderStatus.Pending,
+        id: 1,
+        driver: user,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+      orderRepository.findOne.mockResolvedValue(driverOrder);
+
+      const result = await service.takeOrder(user, { id: 1 });
+
+      expect(result).toEqual({
+        ok: false,
+        error: '이미 배달기사가 배정 됐습니다',
+      });
+    });
+
+    it('배달기사 배정 완료', async () => {
+      orderRepository.findOne.mockResolvedValue(order);
+
+      const result = await service.takeOrder(user, { id: 1 });
+
+      expect(orderRepository.save).toHaveBeenCalledTimes(1);
+      expect(orderRepository.save).toHaveBeenCalledWith(expect.any(Object));
+
+      expect(result).toEqual({
+        ok: true,
+      });
+    });
+
+    it('배달기사 배정 실패', async () => {
+      orderRepository.findOne.mockRejectedValue(new Error(':('));
+
+      const result = await service.takeOrder(user, {
+        id: 1,
+      });
+
+      expect(result).toEqual({
+        ok: false,
+        error: '주문 상태를 변경 할 수 없습니다.',
+      });
+    });
+  });
 });
